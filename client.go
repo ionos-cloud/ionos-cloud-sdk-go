@@ -45,10 +45,10 @@ const DepthParam = "depth"
 const DefaultDepth = "10"
 
 const (
-   RequestStatusQueued  = "QUEUED"
-   RequestStatusRunning = "RUNNING"
-   RequestStatusFailed  = "FAILED"
-   RequestStatusDone    = "DONE"
+	RequestStatusQueued  = "QUEUED"
+	RequestStatusRunning = "RUNNING"
+	RequestStatusFailed  = "FAILED"
+	RequestStatusDone    = "DONE"
 )
 
 // APIClient manages communication with the CLOUD API API v5.0
@@ -94,6 +94,8 @@ type APIClient struct {
 	UserManagementApi *UserManagementApiService
 
 	VolumeApi *VolumeApiService
+
+	Version string
 }
 
 type service struct {
@@ -131,6 +133,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.UserManagementApi = (*UserManagementApiService)(&c.common)
 	c.VolumeApi = (*VolumeApiService)(&c.common)
 
+	c.Version = "5.2.3"
 	return c
 }
 
@@ -219,7 +222,6 @@ func parameterToJson(obj interface{}) (string, error) {
 	return string(jsonBuf), err
 }
 
-
 // callAPI do the request.
 func (c *APIClient) callAPI(request *http.Request) (*http.Response, error) {
 	retryCount := 0
@@ -229,7 +231,7 @@ func (c *APIClient) callAPI(request *http.Request) (*http.Response, error) {
 
 	for {
 
-		retryCount ++
+		retryCount++
 
 		/* we need to clone the request with every retry time because Body closes after the request */
 		var clonedRequest *http.Request = request.Clone(request.Context())
@@ -412,22 +414,21 @@ func (c *APIClient) prepareRequest(
 	// Adding Query Param
 	query := url.Query()
 	/* adding default query params */
-    for k, v := range c.cfg.DefaultQueryParams {
-        if _, ok := queryParams[k]; !ok {
-            queryParams[k] = v
-        }
-    }
+	for k, v := range c.cfg.DefaultQueryParams {
+		if _, ok := queryParams[k]; !ok {
+			queryParams[k] = v
+		}
+	}
 	for k, v := range queryParams {
 		for _, iv := range v {
 			query.Add(k, iv)
 		}
 	}
 
-    // Adding default depth if needed
-    if query.Get(DepthParam) == "" {
-        query.Add(DepthParam, DefaultDepth)
-    }
- 
+	// Adding default depth if needed
+	if query.Get(DepthParam) == "" {
+		query.Add(DepthParam, DefaultDepth)
+	}
 
 	// Encode the parameters.
 	url.RawQuery = query.Encode()
@@ -454,13 +455,13 @@ func (c *APIClient) prepareRequest(
 	// Add the user agent to the request.
 	localVarRequest.Header.Add("User-Agent", c.cfg.UserAgent)
 
-    if c.cfg.Token != "" {
-        localVarRequest.Header.Add("Authorization", "Bearer " + c.cfg.Token)
-    } else {
-        if c.cfg.Username != "" {
-            localVarRequest.SetBasicAuth(c.cfg.Username, c.cfg.Password)
-        }
-    }
+	if c.cfg.Token != "" {
+		localVarRequest.Header.Add("Authorization", "Bearer "+c.cfg.Token)
+	} else {
+		if c.cfg.Username != "" {
+			localVarRequest.SetBasicAuth(c.cfg.Username, c.cfg.Password)
+		}
+	}
 
 	if ctx != nil {
 		// add context to the request
@@ -512,9 +513,9 @@ func (c *APIClient) decode(v interface{}, b []byte, contentType string) (err err
 		return nil
 	}
 	if jsonCheck.MatchString(contentType) {
-		if actualObj, ok := v.(interface{GetActualInstance() interface{}}); ok { // oneOf, anyOf schemas
-			if unmarshalObj, ok := actualObj.(interface{UnmarshalJSON([]byte) error}); ok { // make sure it has UnmarshalJSON defined
-				if err = unmarshalObj.UnmarshalJSON(b); err!= nil {
+		if actualObj, ok := v.(interface{ GetActualInstance() interface{} }); ok { // oneOf, anyOf schemas
+			if unmarshalObj, ok := actualObj.(interface{ UnmarshalJSON([]byte) error }); ok { // make sure it has UnmarshalJSON defined
+				if err = unmarshalObj.UnmarshalJSON(b); err != nil {
 					return err
 				}
 			} else {
@@ -548,11 +549,11 @@ func (c *APIClient) GetRequestStatus(ctx context.Context, path string) (*Request
 
 	}
 
-	apiResponse := &APIResponse {
-		Response: resp,
-		Method: http.MethodGet,
+	apiResponse := &APIResponse{
+		Response:   resp,
+		Method:     http.MethodGet,
 		RequestURL: path,
-		Operation: "GetRequestStatus",
+		Operation:  "GetRequestStatus",
 	}
 
 	apiResponse.Payload = responseBody
@@ -607,11 +608,11 @@ func (c *APIClient) WaitForRequest(ctx context.Context, path string) (*APIRespon
 
 		}
 
-		localVarAPIResponse := &APIResponse {
-			Response: resp,
-			Method: localVarHTTPMethod,
+		localVarAPIResponse := &APIResponse{
+			Response:   resp,
+			Method:     localVarHTTPMethod,
 			RequestURL: path,
-			Operation: "WaitForRequest",
+			Operation:  "WaitForRequest",
 		}
 
 		localVarAPIResponse.Payload = localVarBody
@@ -787,9 +788,9 @@ func strlen(s string) int {
 // GenericOpenAPIError Provides access to the body, error and model on returned errors.
 type GenericOpenAPIError struct {
 	statusCode int
-	body  []byte
-	error string
-	model interface{}
+	body       []byte
+	error      string
+	model      interface{}
 }
 
 // Error returns non-empty string if there was an error.
